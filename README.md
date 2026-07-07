@@ -223,8 +223,8 @@ All API endpoints return `{ "status": "ok", ... }` on success and `{ "status": "
 |----------|----------|---------|-------------|
 | `IBM_API_KEY` | Yes | — | IBM Cloud API key for watsonx.ai |
 | `PROJECT_ID` | Yes | — | watsonx.ai project ID |
-| `IBM_URL` | No | `https://us-south.ml.cloud.ibm.com` | watsonx.ai regional endpoint |
-| `MODEL_ID` | No | `ibm/granite-4-h-small` | Foundation model ID |
+| `IBM_URL` | No | `https://au-syd.ml.cloud.ibm.com` | watsonx.ai regional endpoint |
+| `MODEL_ID` | No | `ibm/granite-8b-code-instruct` | Foundation model ID |
 | `FLASK_SECRET_KEY` | Yes | *(insecure default)* | Flask session signing key |
 | `FLASK_DEBUG` | No | `False` | Enable debug mode |
 | `FLASK_PORT` | No | `5000` | HTTP port |
