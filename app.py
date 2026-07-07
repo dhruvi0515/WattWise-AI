@@ -241,7 +241,11 @@ def _wants_json() -> bool:
 #         debug = FLASK_DEBUG,
 #     )
 # Create the app instance using your application factory configuration
+# Create the app instance using your application factory configuration
 app = create_app()
+
+# Override filesystem session for Vercel's read-only serverless environment
+app.config["SESSION_TYPE"] = "null"
 
 # Fallback route for the landing page
 @app.route('/')
