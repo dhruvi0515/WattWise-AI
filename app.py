@@ -233,10 +233,11 @@ def _wants_json() -> bool:
 # Development server entry point
 # ─────────────────────────────────────────────────────────────────────────────
 
-if __name__ == "__main__":
-    application = create_app()
-    application.run(
-        host  = "0.0.0.0",
-        port  = FLASK_PORT,
-        debug = FLASK_DEBUG,
-    )
+# if __name__ == "__main__":
+#     application = create_app()
+#     application.run(
+#         host  = "0.0.0.0",
+#         port  = FLASK_PORT,
+#         debug = FLASK_DEBUG,
+#     )
+app = Flask(__name__)
