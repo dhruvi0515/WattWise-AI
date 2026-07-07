@@ -240,7 +240,10 @@ def _wants_json() -> bool:
 #         port  = FLASK_PORT,
 #         debug = FLASK_DEBUG,
 #     )
-app = Flask(__name__)
+# Create the app instance using your application factory configuration
+app = create_app()
+
+# Fallback route for the landing page
 @app.route('/')
 def home():
     return "WattWise AI Backend is running successfully!"
