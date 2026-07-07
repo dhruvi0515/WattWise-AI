@@ -131,7 +131,7 @@ The AI never sees raw CSV data — only structured, pre-calculated summaries.
 | Service | Usage |
 |---------|-------|
 | **IBM watsonx.ai** | Foundation model (Granite) for investigation, recommendations, chat, scenario reasoning |
-| **IBM Granite** | `ibm/granite-4-h-small` — the primary LLM |
+| **IBM Granite** | `ibm/granite-8b-code-instruct` — the primary LLM |
 | **IBM Cloud Platform** | Application hosting (Cloud Foundry or Code Engine) |
 
 ---
