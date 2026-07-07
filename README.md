@@ -1,5 +1,10 @@
 # WattWise AI
 
+An AI-powered Smart Home Energy Investigation System using IBM watsonx.ai.
+
+![Dashboard](static/img/Wattwise_ai_dashboard.png)
+
+
 > **Enterprise AI-Powered Smart Home Energy Investigation System**
 > Built with Python Flask · IBM watsonx.ai · Bootstrap 5 · IBM Granite
 
@@ -474,11 +479,21 @@ Download the [sample CSV](static/sample_energy_data.csv) to see the expected for
 
 ## Screenshots
 
-> *Screenshots placeholder — add screenshots to `/static/img/` and reference them here.*
+# 📸 Application Screenshots
 
-| Dashboard | AI Chat | Investigation Report |
-|-----------|---------|---------------------|
-| *(screenshot)* | *(screenshot)* | *(screenshot)* |
+# 📸 Application Preview
+
+| Dashboard | AI Chat |
+|-----------|---------|
+| ![](static/img/Wattwise_ai_dashboard.png) | ![](static/img/Wattwise_ai_AI_chat.png) |
+
+| Upload | Analysis |
+|--------|----------|
+| ![](static/img/Wattwise_ai_csv_upload.png) | ![](static/img/Wattwise_ai_analysis.png) |
+
+| Recommendations 
+|----------------
+| ![](static/img/Wattwise_ai_recommendations.png) 
 
 ---
 
