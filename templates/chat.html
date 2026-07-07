@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% block title %}AI Chat{% endblock %}
+{% block page_title %}<i class="bi bi-chat-dots-fill me-2" aria-hidden="true"></i>AI Energy Investigation Chat{% endblock %}
+
+{% block content %}
+<div class="row g-3 justify-content-center">
+  <div class="col-12 col-xl-10">
+
+    {# ── AI unavailable warning ── #}
+    {% if not ai_ready %}
+    <div class="alert alert-warning d-flex align-items-start gap-2 mb-3" role="alert">
+      <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1" aria-hidden="true"></i>
+      <div>
+        <strong>IBM watsonx.ai not configured.</strong>
+        Add <code>IBM_API_KEY</code> and <code>PROJECT_ID</code> to your <code>.env</code> file and restart.
+        All energy calculations, charts, and structured analysis remain fully functional.
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="row g-3">
+
+      {# ══════════════════════ CHAT PANEL ══════════════════════ #}
+      <div class="col-12 col-lg-8">
+        <div class="card chat-card" style="height:100%;">
+
+          {# Header #}
+          <div class="card-header d-flex align-items-center justify-content-between gap-2 flex-wrap">
+            <div class="d-flex align-items-center gap-2">
+              <span class="status-dot {{ 'status-online' if ai_ready else 'status-offline' }}"
+                    role="status"
+                    aria-label="{{ 'AI online' if ai_ready else 'AI offline' }}"></span>
+              <strong>WattWise AI</strong>
+              <span class="badge bg-primary-subtle text-primary">Chief Energy Investigation Officer</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge bg-secondary-subtle text-secondary fs-tiny"
+                    id="intentBadge"
+                    style="display:none!important"
+                    aria-live="polite"></span>
+              <button class="btn btn-sm btn-outline-secondary no-print"
+                      id="clearChatBtn"
+                      type="button"
+                      aria-label="Clear conversation history">
+                <i class="bi bi-trash me-1" aria-hidden="true"></i>Clear
+              </button>
+            </div>
+          </div>
+
+          {# AI thinking bar — hidden until request starts #}
+          <div class="ai-thinking-bar d-none" id="aiThinkingBar" role="progressbar" aria-label="AI thinking"></div>
+
+          {# Chat window #}
+          <div id="chatWindow"
+               class="chat-window"
+               role="log"
+               aria-label="Conversation history"
+               aria-live="polite"
+               tabindex="0">
+
+            {# Welcome message #}
+            <div class="chat-message bot-message">
+              <div class="message-avatar" aria-hidden="true">
+                <i class="bi bi-lightning-charge-fill"></i>
+              </div>
+              <div class="message-bubble">
+                <strong>WattWise AI</strong>
+                <span class="text-muted small ms-1">— Chief Energy Investigation Officer</span>
+                <hr class="my-2"/>
+                <p class="mb-2">Hello! I investigate household energy usage with precision. I analyse first, explain causes, then recommend solutions — all grounded in your data.</p>
+                <p class="mb-2 small text-muted"><i class="bi bi-lightbulb me-1 text-warning"></i>Click any sample question below or type your own:</p>
+              </div>
+            </div>
+
+            {# Restore conversation history from session #}
+            {% for msg in conversation %}
+              {% if msg.role == 'user' %}
+              <div class="chat-message user-message">
+                <div class="message-bubble">{{ msg.content | e }}</div>
+                <div class="message-avatar user-avatar" aria-hidden="true">
+                  <i class="bi bi-person-fill"></i>
+                </div>
+              </div>
+              {% else %}
+              <div class="chat-message bot-message">
+                <div class="message-avatar" aria-hidden="true">
+                  <i class="bi bi-lightning-charge-fill"></i>
+                </div>
+                <div class="message-bubble">{{ msg.content | nl2br }}</div>
+              </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+
+          {# Sample questions — clickable chips #}
+          <div class="px-3 py-2 border-top" aria-label="Sample questions">
+            <p class="text-muted small mb-2 fw-semibold">
+              <i class="bi bi-chat-quote me-1" aria-hidden="true"></i>Sample questions:
+            </p>
+            <div class="sample-questions" role="list">
+              {% set sample_qs = [
+                ("Why is my electricity bill high?",            "bi-search"),
+                ("Which appliance consumes the most?",          "bi-plug-fill"),
+                ("How can I save money on my electricity bill?","bi-piggy-bank-fill"),
+                ("What if I reduce AC usage by 2 hours?",       "bi-thermometer-sun"),
+                ("Should I replace my refrigerator?",           "bi-arrow-repeat"),
+                ("How can I reduce peak-hour consumption?",     "bi-clock-history"),
+              ] %}
+              {% for question, icon in sample_qs %}
+              <button class="sample-q-btn"
+                      type="button"
+                      role="listitem"
+                      data-prompt="{{ question }}"
+                      aria-label="Ask: {{ question }}">
+                <i class="bi {{ icon }} me-1 text-ibm-blue" aria-hidden="true"></i>{{ question }}
+              </button>
+              {% endfor %}
+            </div>
+          </div>
+
+          {# Quick prompt chips (shorter labels) #}
+          <div class="quick-prompts border-top" aria-label="Quick prompts">
+            <span class="text-muted small me-2">Quick:</span>
+            {% set quick_qs = [
+              ("Why is my electricity bill high?",         "Bill high?"),
+              ("Which appliance consumes the most electricity?","Top consumer?"),
+              ("How can I save electricity this month?",   "Save energy?"),
+              ("What if I reduce AC usage by 2 hours per day?","What-if AC?"),
+              ("What time should I run the washing machine?","Best laundry time?"),
+              ("Tell me my peak consumption hours",        "Peak hours?"),
+            ] %}
+            {% for prompt, label in quick_qs %}
+            <button class="btn btn-sm btn-outline-primary quick-prompt"
+                    type="button"
+                    data-prompt="{{ prompt }}"
+                    aria-label="{{ prompt }}">{{ label }}</button>
+            {% endfor %}
+          </div>
+
+          {# Input area #}
+          <div class="chat-input-area" role="form" aria-label="Send a message">
+            <div class="input-group">
+              <label for="chatInput" class="visually-hidden">Type your energy question</label>
+              <input type="text"
+                     id="chatInput"
+                     class="form-control"
+                     placeholder="Ask about your energy usage…"
+                     autocomplete="off"
+                     aria-label="Energy question input"
+                     maxlength="500"/>
+              <button class="btn btn-primary"
+                      id="sendChatBtn"
+                      type="button"
+                      aria-label="Send message">
+                <i class="bi bi-send-fill" aria-hidden="true"></i>
+              </button>
+            </div>
+            <div class="d-flex align-items-center justify-content-between mt-1">
+              <div class="text-muted small" id="chatStatus" aria-live="polite"></div>
+              <div class="text-muted" style="font-size:0.72rem;" id="loadingPhaseText" aria-live="polite"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {# ══════════════════════ SIDEBAR ══════════════════════ #}
+      <div class="col-12 col-lg-4">
+
+        {# Session memory #}
+        <div class="card mb-3">
+          <div class="card-header">
+            <i class="bi bi-person-fill me-1 text-ibm-blue" aria-hidden="true"></i>
+            Session Memory
+            <span class="badge bg-primary-subtle text-primary ms-auto">Personalisation</span>
+          </div>
+          <div class="card-body small" id="profilePanel">
+            {% if user_profile %}
+              <dl class="row mb-0">
+              {% for k, v in user_profile.items() %}
+                <dt class="col-5 text-muted fw-normal">{{ k.replace('_',' ') | title }}</dt>
+                <dd class="col-7 fw-semibold mb-1">{{ v }}</dd>
+              {% endfor %}
+              </dl>
+            {% else %}
+            <p class="text-muted mb-1 small">
+              <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+              Profile empty. Mention your location, family size, or home type in chat and I'll remember it.
+            </p>
+            <p class="text-muted mb-0 small">
+              Or visit <a href="{{ url_for('main.settings') }}">Settings</a> to fill in your profile.
+            </p>
+            {% endif %}
+          </div>
+        </div>
+
+        {# Agent workflow visualiser #}
+        <div class="card mb-3">
+          <div class="card-header">
+            <i class="bi bi-cpu me-1 text-warning" aria-hidden="true"></i>Agent Workflow
+            <span class="badge bg-warning-subtle text-warning ms-auto">Live</span>
+          </div>
+          <div class="card-body small py-2">
+            <div class="agent-flow" aria-label="Agent pipeline steps">
+              <div class="af-step" id="af-intent">1. Intent Detection</div>
+              <div class="af-arrow" aria-hidden="true">↓</div>
+              <div class="af-step" id="af-data">2. Data Analysis Agent</div>
+              <div class="af-arrow" aria-hidden="true">↓</div>
+              <div class="af-step" id="af-context">3. Context Builder</div>
+              <div class="af-arrow" aria-hidden="true">↓</div>
+              <div class="af-step" id="af-watsonx">4. IBM watsonx.ai</div>
+              <div class="af-arrow" aria-hidden="true">↓</div>
+              <div class="af-step" id="af-report">5. Report Agent</div>
+            </div>
+          </div>
+        </div>
+
+        {# Recent reports #}
+        <div class="card">
+          <div class="card-header">
+            <i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>Recent Reports
+          </div>
+          <div class="card-body p-0">
+            <div class="list-group list-group-flush" id="recentReportsList" role="list">
+              <div class="list-group-item text-muted small py-2">
+                <i class="bi bi-info-circle me-1" aria-hidden="true"></i>No reports yet.
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Upload Data{% endblock %}
+{% block page_title %}<i class="bi bi-cloud-upload-fill me-2"></i>Upload Energy Dataset{% endblock %}
+
+{% block content %}
+<div class="row g-3 justify-content-center">
+  <div class="col-12 col-lg-8">
+
+    <div class="card mb-3">
+      <div class="card-header">
+        <i class="bi bi-file-earmark-arrow-up-fill me-2 text-primary"></i>Upload CSV / Excel File
+      </div>
+      <div class="card-body">
+        <!-- Drop Zone -->
+        <div id="dropZone" class="drop-zone mb-3">
+          <i class="bi bi-cloud-upload fs-1 text-primary d-block mb-2"></i>
+          <p class="mb-1 fw-semibold">Drag & drop your file here</p>
+          <p class="text-muted small mb-3">or click to browse</p>
+          <input type="file" id="fileInput" accept=".csv,.xlsx" class="d-none" />
+          <button class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
+            <i class="bi bi-folder2-open me-1"></i>Browse Files
+          </button>
+          <div class="mt-2 text-muted small">Accepted: CSV, XLSX — max 16 MB</div>
+        </div>
+
+        <!-- File Info -->
+        <div id="fileInfo" class="d-none alert alert-info">
+          <i class="bi bi-file-earmark-text me-2"></i>
+          <span id="fileName"></span> — <span id="fileSize"></span>
+        </div>
+
+        <!-- Progress -->
+        <div id="uploadProgress" class="d-none">
+          <div class="progress mb-2">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" style="width:100%">
+              Analysing…
+            </div>
+          </div>
+        </div>
+
+        <!-- Upload Button -->
+        <button id="uploadBtn" class="btn btn-primary w-100 d-none">
+          <i class="bi bi-cloud-upload-fill me-1"></i>Upload &amp; Analyse
+        </button>
+      </div>
+    </div>
+
+    <!-- Result Card -->
+    <div id="uploadResult" class="d-none">
+      <div class="card border-success mb-3">
+        <div class="card-header bg-success text-white">
+          <i class="bi bi-check-circle-fill me-2"></i>Analysis Complete
+        </div>
+        <div class="card-body" id="uploadResultBody"></div>
+        <div class="card-footer d-flex gap-2">
+          <a href="{{ url_for('main.dashboard') }}" class="btn btn-success">
+            <i class="bi bi-speedometer2 me-1"></i>View Dashboard
+          </a>
+          <a href="{{ url_for('main.analysis') }}" class="btn btn-outline-success">
+            <i class="bi bi-bar-chart-line me-1"></i>Full Analysis
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- CSV Format Guide -->
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-info-circle me-2 text-info"></i>Expected CSV Format
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-2">WattWise AI auto-detects columns. Common formats supported:</p>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered small mb-2">
+            <thead class="table-light"><tr>
+              <th>appliance</th><th>watts</th><th>hours_per_day</th>
+              <th>days_per_month</th><th>kwh</th>
+            </tr></thead>
+            <tbody>
+              <tr><td>Air Conditioner</td><td>1500</td><td>8</td><td>30</td><td>360</td></tr>
+              <tr><td>Refrigerator</td><td>150</td><td>24</td><td>30</td><td>108</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-muted small mb-2">Alternatively, a time-series format:</p>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered small">
+            <thead class="table-light"><tr>
+              <th>date</th><th>hour</th><th>appliance</th><th>kwh</th>
+            </tr></thead>
+            <tbody>
+              <tr><td>2024-01-15</td><td>8</td><td>Air Conditioner</td><td>1.5</td></tr>
+              <tr><td>2024-01-15</td><td>9</td><td>Washing Machine</td><td>0.5</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <a href="{{ url_for('static', filename='sample_energy_data.csv') }}" class="btn btn-sm btn-outline-secondary mt-2" download>
+          <i class="bi bi-download me-1"></i>Download Sample CSV
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+{% endblock %}

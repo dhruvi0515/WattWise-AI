@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Page Not Found{% endblock %}
+{% block page_title %}<i class="bi bi-exclamation-circle me-2 text-warning"></i>Page Not Found{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+  <div class="col-12 col-md-6 text-center">
+    <div class="display-1 fw-bold text-muted mb-3">404</div>
+    <h3 class="mb-2">Page Not Found</h3>
+    <p class="text-muted mb-4">The page you are looking for does not exist or has been moved.</p>
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
+      <i class="bi bi-house-fill me-1"></i>Return to Dashboard
+    </a>
+  </div>
+</div>
+{% endblock %}

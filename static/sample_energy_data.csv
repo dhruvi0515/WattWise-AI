@@ -1,0 +1,11 @@
+appliance,watts,hours_per_day,days_per_month,kwh,monthly_cost
+Air Conditioner,1500,8,30,360.0,43.20
+Water Heater,2000,2,30,120.0,14.40
+Refrigerator,150,24,30,108.0,12.96
+Washing Machine,500,1,20,10.0,1.20
+Television,120,5,30,18.0,2.16
+Laptop,65,6,30,11.7,1.40
+Lighting,200,6,30,36.0,4.32
+Microwave,1000,0.5,30,15.0,1.80
+Dishwasher,1200,0.5,25,15.0,1.80
+Electric Oven,2400,0.5,20,24.0,2.88

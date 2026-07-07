@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}<i class="bi bi-speedometer2 me-2"></i>Smart Home Dashboard{% endblock %}
+
+{% block content %}
+<!-- Row 1: Core KPIs -->
+<div class="row g-3 mb-3">
+  <div class="col-6 col-lg-3">
+    <div class="card kpi-card h-100">
+      <div class="card-body">
+        <div class="kpi-icon text-primary"><i class="bi bi-lightning-charge-fill"></i></div>
+        <div class="kpi-value">{{ analysis.total_monthly_kwh }}</div>
+        <div class="kpi-label">kWh / Month</div>
+        <div class="kpi-sub text-muted small">Total Consumption</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card kpi-card h-100">
+      <div class="card-body">
+        <div class="kpi-icon text-success"><i class="bi bi-currency-dollar"></i></div>
+        <div class="kpi-value">{{ analysis.currency }}{{ analysis.total_monthly_cost }}</div>
+        <div class="kpi-label">Estimated Bill</div>
+        <div class="kpi-sub text-muted small">This Month</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card kpi-card h-100">
+      <div class="card-body">
+        <div class="kpi-icon text-warning"><i class="bi bi-clock-history"></i></div>
+        <div class="kpi-value">{{ analysis.peak_hour_label }}</div>
+        <div class="kpi-label">Peak Hour</div>
+        <div class="kpi-sub text-muted small">Highest Usage</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card kpi-card h-100">
+      <div class="card-body">
+        <div class="kpi-icon text-danger"><i class="bi bi-plug-fill"></i></div>
+        <div class="kpi-value small fw-bold">{{ analysis.top_appliance }}</div>
+        <div class="kpi-label">Top Consumer</div>
+        <div class="kpi-sub text-muted small">Highest Cost Appliance</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Row 2: New Agentic KPIs -->
+<div class="row g-3 mb-3">
+  <!-- Energy Score Ring -->
+  <div class="col-6 col-lg-3">
+    <div class="card kpi-card h-100">
+      <div class="card-body text-center">
+        <div class="score-ring-wrap">
+          {% set score = analysis.energy_score | default(0) %}
+          {% set r = analysis.efficiency_rating | default("N/A") %}
+          {% set color = "success" if score >= 70 else ("warning" if score >= 50 else "danger") %}
+          <svg class="score-ring" viewBox="0 0 80 80">
+            <circle cx="40" cy="40" r="32" fill="none" stroke="var(--border-color)" stroke-width="8"/>
+            <circle cx="40" cy="40" r="32" fill="none"
+              stroke="{% if score >= 70 %}#17b26a{% elif score >= 50 %}#f59e0b{% else %}#ef4444{% endif %}"
+              stroke-width="8" stroke-linecap="round"
+              stroke-dasharray="{{ (score / 100 * 201.06) | round(1) }} 201.06"
+              transform="rotate(-90 40 40)"/>
+            <text x="40" y="36" text-anchor="middle" font-size="14" font-weight="700" fill="currentColor">{{ score }}</text>
+            <text x="40" y="50" text-anchor="middle" font-size="7" fill="#6b7280">/100</text>
+          </svg>
+        </div>
+        <div class="kpi-label mt-1">Energy Score</div>
+        <div class="kpi-sub">
+          <span class="badge bg-{{ color }}-subtle text-{{ color }}">{{ r }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Efficiency Rating -->
+  <div class="col-6 col-lg-3">
+    <div class="card kpi-card h-100">
+      <div class="card-body">
+        <div class="kpi-icon text-info"><i class="bi bi-award-fill"></i></div>
+        <div class="kpi-value text-info">{{ analysis.efficiency_rating | default("N/A") }}</div>
+        <div class="kpi-label">Efficiency Rating</div>
+        <div class="kpi-sub text-muted small">
+          {{ analysis.vs_national_avg_kwh | default(0) | abs }} kWh
+          {{ "above" if (analysis.vs_national_avg_kwh | default(0)) > 0 else "below" }} avg
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Potential Savings -->
+  <div class="col-6 col-lg-3">
+    <div class="card kpi-card h-100">
+      <div class="card-body">
+        <div class="kpi-icon text-success"><i class="bi bi-piggy-bank-fill"></i></div>
+        <div class="kpi-value text-success">
+          {{ analysis.currency }}{{ analysis.potential_savings_cost | default(0) }}
+        </div>
+        <div class="kpi-label">Savings Potential</div>
+        <div class="kpi-sub text-muted small">Per month</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CO2 -->
+  <div class="col-6 col-lg-3">
+    <div class="card kpi-card h-100">
+      <div class="card-body">
+        <div class="kpi-icon text-secondary"><i class="bi bi-cloud-fill"></i></div>
+        <div class="kpi-value">{{ analysis.monthly_co2_kg | default(0) }}</div>
+        <div class="kpi-label">kg CO₂ / Month</div>
+        <div class="kpi-sub text-muted small">Carbon footprint</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Actions Bar -->
+<div class="row g-3 mb-3">
+  <div class="col-12">
+    <div class="card border-primary">
+      <div class="card-body py-2 d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-robot text-primary fs-5"></i>
+          <span class="fw-semibold">Quick Actions</span>
+          <span class="badge bg-primary-subtle text-primary">Agent Orchestrator</span>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          <button class="btn btn-sm btn-primary" id="quickInvestigateBtn">
+            <i class="bi bi-search me-1"></i>Quick Investigation
+          </button>
+          <button class="btn btn-sm btn-outline-warning" id="refreshInsightsBtn">
+            <i class="bi bi-stars me-1"></i>AI Insights
+          </button>
+          <a href="{{ url_for('main.recommendations') }}" class="btn btn-sm btn-outline-success">
+            <i class="bi bi-lightbulb me-1"></i>Recommendations
+          </a>
+          <a href="{{ url_for('main.simulator') }}" class="btn btn-sm btn-outline-info">
+            <i class="bi bi-sliders me-1"></i>Simulate
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-3 mb-3">
+  <div class="col-12 col-lg-8">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span><i class="bi bi-graph-up me-2 text-primary"></i>Monthly Energy Trend</span>
+        <span class="badge bg-primary-subtle text-primary">Last 6 Months</span>
+      </div>
+      <div class="card-body"><canvas id="monthlyTrendChart" height="110"></canvas></div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-pie-chart-fill me-2 text-success"></i>Energy Distribution
+      </div>
+      <div class="card-body d-flex align-items-center justify-content-center">
+        <canvas id="distributionChart" height="180"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hourly + AI Insights -->
+<div class="row g-3 mb-3">
+  <div class="col-12 col-lg-7">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-activity me-2 text-warning"></i>24-Hour Usage Profile</div>
+      <div class="card-body"><canvas id="hourlyChart" height="130"></canvas></div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-5">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span><i class="bi bi-stars me-2 text-warning"></i>AI Quick Insights</span>
+        <span class="badge bg-warning-subtle text-warning">watsonx.ai</span>
+      </div>
+      <div class="card-body" id="aiInsightsBox">
+        {% if ai_insights %}
+          <div class="ai-insight-text">{{ ai_insights | nl2br }}</div>
+        {% else %}
+          <div class="text-muted text-center py-4">
+            <i class="bi bi-stars fs-2 d-block mb-2 text-warning"></i>
+            Click <strong>AI Insights</strong> above to generate WattWise AI analysis.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Investigate Modal -->
+<div class="modal fade" id="investigateModal" tabindex="-1" aria-labelledby="investigateModalTitle" aria-modal="true" role="dialog">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title" id="investigateModalTitle">
+          <i class="bi bi-search me-2 text-ibm-blue" aria-hidden="true"></i>Quick AI Investigation
+        </h5>
+        <button class="btn-close" data-bs-dismiss="modal" aria-label="Close investigation dialog"></button>
+      </div>
+      <div class="modal-body pt-2">
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="investigateQuestion">Investigation Question</label>
+          <input type="text"
+                 id="investigateQuestion"
+                 class="form-control"
+                 value="Why is my electricity bill high?"
+                 placeholder="Enter your investigation question…"
+                 maxlength="300"
+                 aria-describedby="investigateHint"/>
+          <div id="investigateHint" class="form-text">Examples: "Why is my bill so high?", "Which appliance costs the most?"</div>
+        </div>
+        <!-- Sample questions for the modal -->
+        <div class="mb-3">
+          <div class="d-flex flex-wrap gap-2">
+            {% for q in [
+              "Why is my electricity bill high?",
+              "Which appliance costs the most?",
+              "How can I reduce peak-hour usage?",
+              "Should I replace my old appliances?",
+            ] %}
+            <button type="button"
+                    class="btn btn-sm btn-outline-secondary investigate-preset"
+                    data-q="{{ q }}">{{ q }}</button>
+            {% endfor %}
+          </div>
+        </div>
+        <!-- Loading state -->
+        <div id="investigateProgress" class="d-none mb-3">
+          <div class="ai-thinking-bar mb-2"></div>
+          <div class="d-flex align-items-center gap-2 small text-muted">
+            <div class="typing-indicator" aria-hidden="true"><span></span><span></span><span></span></div>
+            <span id="investigatePhaseText">Agent Orchestrator investigating…</span>
+          </div>
+        </div>
+        <div id="investigateResult" class="d-none"></div>
+      </div>
+      <div class="modal-footer border-0">
+        <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+        <button class="btn btn-primary" id="runInvestigateBtn" type="button">
+          <i class="bi bi-search me-1" aria-hidden="true"></i>Investigate
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Appliance Breakdown Table -->
+<div class="row g-3">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span><i class="bi bi-table me-2 text-info"></i>Appliance Consumption Breakdown</span>
+        <a href="{{ url_for('main.analysis') }}" class="btn btn-sm btn-outline-primary">
+          Full Analysis <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr><th>Appliance</th><th>Monthly kWh</th><th>Monthly Cost</th><th>CO₂</th><th>Share</th></tr>
+            </thead>
+            <tbody>
+              {% for a in analysis.appliances[:8] %}
+              <tr>
+                <td><i class="bi bi-plug me-1 text-muted"></i>{{ a.appliance }}</td>
+                <td>{{ a.monthly_kwh }} kWh</td>
+                <td>{{ analysis.currency }}{{ "%.2f"|format(a.monthly_cost) }}</td>
+                <td class="text-muted small">{{ a.co2_kg | default(0) }} kg</td>
+                <td>
+                  {% set pct = a.pct_of_total | default(0) %}
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="progress flex-grow-1" style="height:6px;">
+                      <div class="progress-bar {% if pct > 30 %}bg-danger{% elif pct > 15 %}bg-warning{% else %}bg-primary{% endif %}"
+                           style="width:{{ pct }}%"></div>
+                    </div>
+                    <span class="small text-muted">{{ pct }}%</span>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>const ANALYSIS = {{ analysis | tojson }};</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

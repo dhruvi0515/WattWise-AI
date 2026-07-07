@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}Energy Analysis{% endblock %}
+{% block page_title %}<i class="bi bi-bar-chart-line-fill me-2"></i>Energy Analysis{% endblock %}
+
+{% block content %}
+
+<!-- Summary Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card kpi-card text-center">
+      <div class="card-body">
+        <div class="kpi-icon text-primary"><i class="bi bi-lightning-charge-fill"></i></div>
+        <div class="kpi-value">{{ analysis.total_monthly_kwh }}</div>
+        <div class="kpi-label">kWh/Month</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card kpi-card text-center">
+      <div class="card-body">
+        <div class="kpi-icon text-success"><i class="bi bi-calendar3"></i></div>
+        <div class="kpi-value">{{ analysis.daily_avg_kwh }}</div>
+        <div class="kpi-label">kWh/Day Avg</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card kpi-card text-center">
+      <div class="card-body">
+        <div class="kpi-icon text-warning"><i class="bi bi-currency-dollar"></i></div>
+        <div class="kpi-value">{{ analysis.currency }}{{ analysis.electricity_rate }}</div>
+        <div class="kpi-label">Rate / kWh</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card kpi-card text-center">
+      <div class="card-body">
+        <div class="kpi-icon text-danger"><i class="bi bi-clock-history"></i></div>
+        <div class="kpi-value">{{ analysis.peak_hour_label }}</div>
+        <div class="kpi-label">Peak Hour</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart Row 1 -->
+<div class="row g-3 mb-4">
+  <div class="col-12 col-lg-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-bar-chart me-2 text-primary"></i>Appliance Consumption (kWh)</div>
+      <div class="card-body"><canvas id="applianceBarChart" height="250"></canvas></div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-pie-chart me-2 text-success"></i>Cost Distribution</div>
+      <div class="card-body d-flex align-items-center justify-content-center">
+        <canvas id="costPieChart" height="250"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart Row 2 -->
+<div class="row g-3 mb-4">
+  <div class="col-12 col-lg-7">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-graph-up me-2 text-info"></i>Monthly Trend</div>
+      <div class="card-body"><canvas id="monthlyChart" height="180"></canvas></div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-5">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-activity me-2 text-warning"></i>Hourly Profile</div>
+      <div class="card-body"><canvas id="hourlyAnalysisChart" height="180"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- Full Appliance Table -->
+<div class="row g-3">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-table me-2"></i>Full Appliance Breakdown</div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>#</th>
+                <th>Appliance</th>
+                {% if analysis.appliances and analysis.appliances[0].watts is defined %}
+                <th>Watts</th>
+                <th>Hours/Day</th>
+                <th>Days/Month</th>
+                {% endif %}
+                <th>kWh/Month</th>
+                <th>Cost/Month</th>
+                <th>Share</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for a in analysis.appliances %}
+              <tr>
+                <td class="text-muted small">{{ loop.index }}</td>
+                <td><i class="bi bi-plug me-1 text-primary"></i>{{ a.appliance }}</td>
+                {% if a.watts is defined %}
+                <td>{{ a.watts }}W</td>
+                <td>{{ a.hours_per_day }}h</td>
+                <td>{{ a.days_per_month }}d</td>
+                {% endif %}
+                <td><strong>{{ a.monthly_kwh }}</strong></td>
+                <td>{{ analysis.currency }}{{ "%.2f"|format(a.monthly_cost) }}</td>
+                <td>
+                  {% set pct = ((a.monthly_kwh / analysis.total_monthly_kwh) * 100)|round(1) %}
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="progress" style="width:80px;height:6px;">
+                      <div class="progress-bar
+                        {% if pct > 30 %}bg-danger{% elif pct > 15 %}bg-warning{% else %}bg-success{% endif %}"
+                           style="width:{{ pct }}%"></div>
+                    </div>
+                    <span class="small">{{ pct }}%</span>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot class="table-light fw-bold">
+              <tr>
+                <td colspan="{% if analysis.appliances and analysis.appliances[0].watts is defined %}5{% else %}2{% endif %}">Total</td>
+                <td>{{ analysis.total_monthly_kwh }} kWh</td>
+                <td>{{ analysis.currency }}{{ "%.2f"|format(analysis.total_monthly_cost) }}</td>
+                <td>100%</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>const ANALYSIS = {{ analysis_json | safe }};</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/analysis.js') }}"></script>
+{% endblock %}

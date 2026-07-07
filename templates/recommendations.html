@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Recommendations{% endblock %}
+{% block page_title %}<i class="bi bi-lightbulb-fill me-2"></i>Recommendation Center{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+
+  <!-- Header Card -->
+  <div class="col-12">
+    <div class="card border-success">
+      <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+          <h5 class="mb-1">AI-Powered Energy Recommendations</h5>
+          <p class="text-muted small mb-0">
+            {{ analysis.total_monthly_kwh }} kWh/month &nbsp;|&nbsp;
+            Est. bill: <strong>{{ analysis.currency }}{{ analysis.total_monthly_cost }}</strong> &nbsp;|&nbsp;
+            Score: <strong>{{ analysis.energy_score | default("N/A") }}/100</strong> &nbsp;|&nbsp;
+            Potential savings:
+            <strong class="text-success">{{ analysis.currency }}{{ analysis.potential_savings_cost | default(0) }}/mo</strong>
+          </p>
+        </div>
+        <button id="generateRecBtn" class="btn btn-success">
+          <i class="bi bi-stars me-1"></i>
+          {% if rec_data %}Regenerate{% else %}Generate{% endif %} Recommendations
+        </button>
+      </div>
+      <div id="recProgress" class="d-none px-3 pb-3">
+        <div class="progress mb-1" aria-label="Generating recommendations">
+          <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width:100%"
+               role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        <div id="recLoadingText"
+             class="text-muted small text-center"
+             aria-live="polite"
+             aria-label="Loading phase">Recommendation Agent is analysing…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Structured Recommendations (always shown if available; also target for JS rebuild) -->
+  {% if rec_data and rec_data.structured %}
+  <div class="col-12" id="structuredRecCards">
+    <div class="card mb-2">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span><i class="bi bi-list-ol me-2 text-primary"></i>Prioritised Action Plan</span>
+        <span class="text-muted small">Generated: {{ rec_data.generated }}</span>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          {% for rec in rec_data.structured %}
+          <div class="col-12 col-lg-6">
+            <div class="card rec-card h-100 border-0 bg-body-secondary position-relative">
+              <!-- Priority Badge -->
+              <div class="priority-ribbon
+                {% if rec.priority == 'High' %}ribbon-high
+                {% elif rec.priority == 'Medium' %}ribbon-medium
+                {% else %}ribbon-low{% endif %}">
+                {{ rec.priority }}
+              </div>
+              <div class="card-body pt-3">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <span class="rec-icon-lg"><i class="bi {{ rec.icon | default('bi-lightbulb') }}"></i></span>
+                  <strong>{{ rec.title }}</strong>
+                </div>
+
+                <!-- XAI: Why -->
+                <div class="xai-block mb-2">
+                  <div class="xai-label"><i class="bi bi-question-circle-fill me-1 text-primary"></i>Why this recommendation?</div>
+                  <p class="small text-muted mb-0">{{ rec.why }}</p>
+                </div>
+
+                <!-- XAI: Expected Benefit -->
+                <div class="xai-block mb-2">
+                  <div class="xai-label"><i class="bi bi-graph-up-arrow me-1 text-success"></i>Expected Benefit</div>
+                  <p class="small text-muted mb-0">{{ rec.expected_benefit }}</p>
+                </div>
+
+                <!-- Metrics Row -->
+                <div class="d-flex flex-wrap gap-1 mt-2">
+                  <span class="badge bg-success-subtle text-success">
+                    <i class="bi bi-lightning me-1"></i>{{ rec.estimated_monthly_kwh_saving }} kWh/mo saved
+                  </span>
+                  <span class="badge bg-primary-subtle text-primary">
+                    {{ rec.currency }}{{ rec.estimated_monthly_cost_saving }}/mo
+                  </span>
+                  <span class="badge bg-warning-subtle text-warning">
+                    {{ rec.currency }}{{ rec.estimated_annual_cost_saving }}/yr
+                  </span>
+                  <span class="badge bg-secondary-subtle text-secondary">
+                    <i class="bi bi-cloud me-1"></i>{{ rec.estimated_co2_saving_kg }} kg CO₂
+                  </span>
+                </div>
+
+                <!-- Difficulty + Time -->
+                <div class="d-flex flex-wrap gap-1 mt-1">
+                  <span class="badge
+                    {% if rec.difficulty == 'Easy' %}bg-success
+                    {% elif rec.difficulty == 'Medium' %}bg-warning text-dark
+                    {% else %}bg-danger{% endif %}">
+                    {{ rec.difficulty }}
+                  </span>
+                  <span class="badge bg-info-subtle text-info">
+                    <i class="bi bi-clock me-1"></i>{{ rec.time_required }}
+                  </span>
+                </div>
+
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- AI Narrative (always shown if available) -->
+  <div class="col-12" id="recContent">
+    {% if rec_data %}
+    <div class="card">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span><i class="bi bi-stars me-2 text-warning"></i>AI-Generated Recommendations (Full Text)</span>
+        <span class="badge bg-warning-subtle text-warning">IBM watsonx.ai</span>
+      </div>
+      <div class="card-body">
+        <div class="ai-narrative" id="recText">{{ rec_data.text | nl2br }}</div>
+      </div>
+    </div>
+    {% else %}
+    <div class="card text-center py-5">
+      <div class="card-body">
+        <i class="bi bi-lightbulb fs-1 text-muted d-block mb-3"></i>
+        <h5>No recommendations yet</h5>
+        <p class="text-muted">Click <strong>Generate Recommendations</strong> to activate the Recommendation Agent.</p>
+        {% if not ai_ready %}
+        <div class="alert alert-warning mt-3 text-start">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          IBM watsonx.ai not configured. Add credentials to <code>.env</code> to enable AI recommendations.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Universal Tips -->
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-stars me-2 text-primary"></i>Universal Energy Saving Tips</div>
+      <div class="card-body">
+        <div class="row g-3">
+          {% for icon, title, text, color in [
+            ("bi-thermometer-sun","Use AC Wisely","Set to 24–26°C; every degree lower = ~6% more energy.","success"),
+            ("bi-sun-fill","Shift Loads Off-Peak","Run heavy appliances before 5 PM or after 10 PM.","warning"),
+            ("bi-lightbulb","Switch to LED","80% less energy; 25× longer lifespan.","info"),
+            ("bi-droplet-fill","Insulate Water Heater","Reduce temp to 49°C; add insulation blanket.","primary"),
+            ("bi-plug","Kill Standby Power","Unplug idle devices — 5–10% of bill is standby.","danger"),
+            ("bi-calendar-check","Monthly Audit","Upload fresh data monthly for updated analysis.","secondary"),
+          ] %}
+          <div class="col-12 col-md-6 col-lg-4">
+            <div class="card h-100 border-0 bg-body-secondary">
+              <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                  <span class="me-2 text-{{ color }}"><i class="bi {{ icon }} fs-5"></i></span>
+                  <strong class="small">{{ title }}</strong>
+                </div>
+                <p class="small text-muted mb-0">{{ text }}</p>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/recommendations.js') }}"></script>
+{% endblock %}

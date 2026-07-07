@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Scenario Simulator{% endblock %}
+{% block page_title %}<i class="bi bi-sliders me-2"></i>Scenario Simulator{% endblock %}
+
+{% block content %}
+<div class="row g-3 justify-content-center">
+  <div class="col-12 col-lg-10">
+
+    {% if not ai_ready %}
+    <div class="alert alert-warning mb-3">
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      IBM watsonx.ai is not configured. AI reasoning will be unavailable, but deterministic calculations will still run.
+    </div>
+    {% endif %}
+
+    <!-- Simulator Card -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <i class="bi bi-sliders me-2 text-primary"></i>What-If Scenario Simulator
+      </div>
+      <div class="card-body">
+        <p class="text-muted mb-3">
+          Describe a change you want to make and WattWise AI will estimate the energy and cost impact.
+        </p>
+
+        <!-- Natural Language Input -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Natural Language Query</label>
+          <textarea id="scenarioInput" class="form-control" rows="3"
+            placeholder="e.g. What if I reduce AC usage by 3 hours per day?&#10;What if I reduce washing machine usage by 2 hours per day?&#10;What if I turn off the dishwasher for 30 minutes?"></textarea>
+        </div>
+
+        <!-- Quick Presets -->
+        <div class="mb-3">
+          <label class="form-label small text-muted">Quick Presets:</label>
+          <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-sm btn-outline-secondary scenario-preset" data-q="What if I reduce AC usage by 2 hours per day?">
+              AC -2h/day
+            </button>
+            <button class="btn btn-sm btn-outline-secondary scenario-preset" data-q="What if I reduce water heater usage by 1 hour per day?">
+              Water Heater -1h/day
+            </button>
+            <button class="btn btn-sm btn-outline-secondary scenario-preset" data-q="What if I reduce washing machine usage by 3 days per month?">
+              Washer -3 days
+            </button>
+            <button class="btn btn-sm btn-outline-secondary scenario-preset" data-q="What if I reduce TV usage by 2 hours per day?">
+              TV -2h/day
+            </button>
+            <button class="btn btn-sm btn-outline-secondary scenario-preset" data-q="What if I reduce lighting by 3 hours per day?">
+              Lights -3h/day
+            </button>
+          </div>
+        </div>
+
+        <button id="simulateBtn" class="btn btn-primary">
+          <i class="bi bi-play-fill me-1"></i>Run Simulation
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="simProgress" class="d-none mb-3">
+      <div class="card">
+        <div class="card-body">
+          <div class="progress mb-2">
+            <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width:100%">
+              Running simulation…
+            </div>
+          </div>
+          <div class="text-muted small text-center">WattWise AI is calculating the impact…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="simResults" class="d-none">
+      <!-- Impact Cards -->
+      <div class="row g-3 mb-3" id="impactCards"></div>
+
+      <!-- AI Reasoning -->
+      <div class="card mb-3">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="bi bi-stars me-1 text-warning"></i>AI Reasoning
+          <span class="badge bg-warning-subtle text-warning ms-auto">IBM watsonx.ai</span>
+        </div>
+        <div class="card-body">
+          <div class="ai-narrative" id="aiReasoningText"></div>
+        </div>
+      </div>
+
+      <!-- Scenario Chart -->
+      <div class="card mb-3">
+        <div class="card-header">
+          <i class="bi bi-bar-chart me-2 text-info"></i>Before vs After Comparison
+        </div>
+        <div class="card-body">
+          <canvas id="scenarioChart" height="100"></canvas>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('main.recommendations') }}" class="btn btn-success">
+          <i class="bi bi-lightbulb me-1"></i>View Recommendations
+        </a>
+        <button class="btn btn-outline-secondary" id="newSimBtn">
+          <i class="bi bi-arrow-counterclockwise me-1"></i>New Simulation
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/simulator.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block page_title %}<i class="bi bi-gear-fill me-2" aria-hidden="true"></i>Settings{% endblock %}
+
+{% block content %}
+<div class="row g-3 justify-content-center">
+  <div class="col-12 col-lg-9">
+
+    {# ── Application Info ── #}
+    <div class="card mb-3">
+      <div class="card-header">
+        <i class="bi bi-info-circle me-1 text-info" aria-hidden="true"></i>Application Info
+      </div>
+      <div class="card-body">
+        <div class="row g-2 small">
+          <div class="col-6 col-md-3">
+            <span class="text-muted d-block">Name</span>
+            <strong>{{ app_name }}</strong>
+          </div>
+          <div class="col-6 col-md-3">
+            <span class="text-muted d-block">Version</span>
+            <strong>{{ app_version }}</strong>
+          </div>
+          <div class="col-6 col-md-3">
+            <span class="text-muted d-block">Architecture</span>
+            <strong>Multi-Agent Orchestrator</strong>
+          </div>
+          <div class="col-6 col-md-3">
+            <span class="text-muted d-block">IBM watsonx.ai</span>
+            {% if ai_ready %}
+            <span class="badge bg-success">
+              <i class="bi bi-check-circle me-1" aria-hidden="true"></i>Connected
+            </span>
+            {% else %}
+            <span class="badge bg-danger">
+              <i class="bi bi-x-circle me-1" aria-hidden="true"></i>Not Connected
+            </span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ── Electricity Rate & Currency ── #}
+    <div class="card mb-3 setting-card">
+      <div class="card-header">
+        <i class="bi bi-currency-exchange me-1 text-warning" aria-hidden="true"></i>
+        Electricity &amp; Currency Settings
+      </div>
+      <div class="card-body">
+        <form id="settingsForm" novalidate>
+          <div class="row g-3">
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-semibold" for="electricityRate">Rate per kWh</label>
+              <div class="input-group">
+                <span class="input-group-text">{{ current_currency }}</span>
+                <input type="number"
+                       class="form-control"
+                       id="electricityRate"
+                       name="electricity_rate"
+                       value="{{ current_rate }}"
+                       step="0.001"
+                       min="0.001"
+                       max="10"
+                       aria-describedby="rateHint"
+                       required/>
+                <span class="input-group-text">/ kWh</span>
+              </div>
+              <div id="rateHint" class="settings-hint">Local utility rate (e.g. 0.12 = $0.12/kWh)</div>
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-semibold" for="currencySymbol">Currency Symbol</label>
+              <input type="text"
+                     class="form-control"
+                     id="currencySymbol"
+                     name="currency"
+                     value="{{ current_currency }}"
+                     maxlength="3"
+                     placeholder="$"
+                     aria-describedby="currencyHint"/>
+              <div id="currencyHint" class="settings-hint">E.g. $, £, €, ₹, ¥</div>
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-semibold" for="electricityUnit">Electricity Unit</label>
+              <select class="form-select" id="electricityUnit" name="electricity_unit">
+                <option value="kWh" selected>kWh (kilowatt-hours)</option>
+                <option value="MWh">MWh (megawatt-hours)</option>
+                <option value="units">Units</option>
+              </select>
+              <div class="settings-hint">Measurement unit shown in reports</div>
+            </div>
+          </div>
+          <div class="mt-3">
+            <button type="submit" class="btn btn-primary" id="saveSettingsBtn">
+              <i class="bi bi-save me-1" aria-hidden="true"></i>Save Settings
+            </button>
+          </div>
+          <div id="settingsMsg" class="mt-2" role="status" aria-live="polite"></div>
+        </form>
+      </div>
+    </div>
+
+    {# ── User Profile / Session Memory ── #}
+    <div class="card mb-3 setting-card">
+      <div class="card-header">
+        <i class="bi bi-person-fill me-1 text-ibm-blue" aria-hidden="true"></i>
+        User Profile
+        <span class="badge bg-primary-subtle text-primary ms-auto">Session Memory</span>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">
+          <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+          This profile personalises AI recommendations. It is also updated automatically when you mention
+          your home details in the chat.
+        </p>
+        <form id="profileForm" novalidate>
+          <div class="row g-3">
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-semibold" for="profileLocation">Location</label>
+              <input type="text"
+                     class="form-control"
+                     id="profileLocation"
+                     name="location"
+                     value="{{ user_profile.get('location', '') }}"
+                     placeholder="e.g. Texas, US"
+                     maxlength="100"/>
+              <div class="settings-hint">Used for regional energy tips</div>
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-semibold" for="profileFamilySize">Household Size</label>
+              <input type="number"
+                     class="form-control"
+                     id="profileFamilySize"
+                     name="family_size"
+                     value="{{ user_profile.get('family_size', '') }}"
+                     min="1"
+                     max="20"
+                     placeholder="e.g. 4"/>
+              <div class="settings-hint">Number of people in your home</div>
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-semibold" for="profileHomeType">Home Type</label>
+              <select class="form-select" id="profileHomeType" name="home_type">
+                <option value="">Select…</option>
+                {% for t in ["House","Apartment","Bungalow","Townhouse","Villa","Studio","Other"] %}
+                <option value="{{ t }}"
+                        {{ "selected" if user_profile.get('home_type') == t else "" }}>{{ t }}</option>
+                {% endfor %}
+              </select>
+              <div class="settings-hint">Type of your residence</div>
+            </div>
+          </div>
+          <div class="mt-3 d-flex align-items-center gap-3">
+            <button type="submit" class="btn btn-outline-primary" id="saveProfileBtn">
+              <i class="bi bi-person-check me-1" aria-hidden="true"></i>Save Profile
+            </button>
+          </div>
+          <div id="profileMsg" class="mt-2" role="status" aria-live="polite"></div>
+        </form>
+      </div>
+    </div>
+
+    {# ── Energy Goals ── #}
+    <div class="card mb-3 setting-card">
+      <div class="card-header">
+        <i class="bi bi-trophy-fill me-1 text-success" aria-hidden="true"></i>
+        Energy Saving Goal
+      </div>
+      <div class="card-body">
+        <form id="goalsForm" novalidate>
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold" for="savingsGoal">Monthly Savings Target (%)</label>
+              <div class="input-group">
+                <input type="number"
+                       class="form-control"
+                       id="savingsGoal"
+                       name="savings_goal"
+                       value="{{ user_profile.get('savings_goal', agent_instructions.energy_saving_goal_pct) }}"
+                       min="1"
+                       max="50"
+                       placeholder="20"/>
+                <span class="input-group-text">%</span>
+              </div>
+              <div class="settings-hint">Target % reduction in monthly energy usage (default: 20%)</div>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold" for="aiPersonality">AI Personality</label>
+              <select class="form-select" id="aiPersonality" name="ai_personality">
+                {% for style in ["professional", "friendly", "concise", "detailed"] %}
+                <option value="{{ style }}"
+                        {{ "selected" if user_profile.get('ai_personality', 'professional') == style else "" }}>
+                  {{ style | title }}
+                </option>
+                {% endfor %}
+              </select>
+              <div class="settings-hint">Tone of AI responses (professional is default)</div>
+            </div>
+          </div>
+          <div class="mt-3">
+            <button type="submit" class="btn btn-outline-success">
+              <i class="bi bi-trophy me-1" aria-hidden="true"></i>Save Goals
+            </button>
+          </div>
+          <div id="goalsMsg" class="mt-2" role="status" aria-live="polite"></div>
+        </form>
+      </div>
+    </div>
+
+    {# ── Theme ── #}
+    <div class="card mb-3 setting-card">
+      <div class="card-header">
+        <i class="bi bi-palette-fill me-1 text-secondary" aria-hidden="true"></i>
+        Display &amp; Theme
+      </div>
+      <div class="card-body">
+        <div class="row g-3 align-items-center">
+          <div class="col-12 col-md-6">
+            <label class="form-label fw-semibold">Colour Theme</label>
+            <div class="d-flex gap-2">
+              <button type="button"
+                      class="btn btn-outline-secondary"
+                      id="setLightTheme"
+                      aria-label="Switch to light theme">
+                <i class="bi bi-sun me-1" aria-hidden="true"></i>Light
+              </button>
+              <button type="button"
+                      class="btn btn-outline-secondary"
+                      id="setDarkTheme"
+                      aria-label="Switch to dark theme">
+                <i class="bi bi-moon-fill me-1" aria-hidden="true"></i>Dark
+              </button>
+              <button type="button"
+                      class="btn btn-outline-secondary"
+                      id="setSystemTheme"
+                      aria-label="Use system theme preference">
+                <i class="bi bi-display me-1" aria-hidden="true"></i>System
+              </button>
+            </div>
+            <div class="settings-hint">Current: <span id="currentThemeLabel">—</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ── AGENT_INSTRUCTIONS view (read-only) ── #}
+    <div class="card mb-3 setting-card">
+      <div class="card-header">
+        <i class="bi bi-robot me-1 text-ibm-blue" aria-hidden="true"></i>
+        Agent Configuration
+        <span class="badge bg-secondary-subtle text-secondary ms-auto">Read-only</span>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">
+          To customise agent behaviour without touching application logic,
+          edit <code>config.py → AGENT_INSTRUCTIONS</code>.
+        </p>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover small mb-0" aria-label="Agent configuration settings">
+            <thead class="table-light">
+              <tr><th scope="col">Setting</th><th scope="col">Value</th></tr>
+            </thead>
+            <tbody>
+              {% set config_rows = [
+                ("Agent Role",               agent_instructions.agent_role),
+                ("Tone",                     agent_instructions.tone | title),
+                ("Verbosity",               agent_instructions.verbosity | title),
+                ("Investigation Style",      agent_instructions.investigation_style | title),
+                ("Recommendation Style",     agent_instructions.recommendation_style | title),
+                ("Recommendation Strategy",  agent_instructions.recommendation_strategy),
+                ("Max Recommendations",      agent_instructions.max_recommendations),
+                ("Energy Saving Goal",       agent_instructions.energy_saving_goal_pct ~ "%"),
+                ("Explanation Required (XAI)", agent_instructions.explanation_required),
+                ("Include CO₂ Impact",       agent_instructions.include_co2_impact),
+                ("Country / Region",        agent_instructions.country),
+              ] %}
+              {% for label, value in config_rows %}
+              <tr>
+                <td class="text-muted">{{ label }}</td>
+                <td><strong>{{ value }}</strong></td>
+              </tr>
+              {% endfor %}
+              <tr>
+                <td class="text-muted">Safety Rules</td>
+                <td>
+                  <ul class="mb-0 ps-3 small">
+                    {% for rule in agent_instructions.safety_rules %}
+                    <li>{{ rule }}</li>
+                    {% endfor %}
+                  </ul>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    {# ── Demo Mode ── #}
+    <div class="card mb-3 setting-card">
+      <div class="card-header">
+        <i class="bi bi-play-circle-fill me-1 text-info" aria-hidden="true"></i>
+        Demo Mode
+        <span class="badge bg-info-subtle text-info ms-auto">Built-in dataset</span>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">
+          WattWise AI includes a realistic built-in household energy dataset so you can experience all
+          features without uploading your own data. The demo dataset includes 10 appliances, hourly
+          usage profiles, monthly trends, and all AI investigation workflows.
+        </p>
+        <p class="text-muted small mb-3">
+          <strong>Demo dataset includes:</strong> Air Conditioner (1,500W), Water Heater (2,000W),
+          Refrigerator, Washing Machine, Television, Laptop, Lighting, Microwave, Dishwasher, and
+          Electric Oven — with realistic hourly usage profiles and monthly trend data.
+        </p>
+        <div class="d-flex flex-wrap gap-2">
+          <button type="button"
+                  class="btn btn-info btn-sm text-white"
+                  id="loadDemoBtn"
+                  aria-label="Load built-in demo energy dataset">
+            <i class="bi bi-play-circle me-1" aria-hidden="true"></i>Load Demo Dataset
+          </button>
+          <a href="{{ url_for('main.upload') }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-cloud-upload me-1" aria-hidden="true"></i>Upload Your Own Data
+          </a>
+          <a href="{{ url_for('static', filename='sample_energy_data.csv') }}"
+             class="btn btn-outline-secondary btn-sm"
+             download>
+            <i class="bi bi-download me-1" aria-hidden="true"></i>Download Sample CSV
+          </a>
+        </div>
+        <div id="demoMsg" class="mt-2" role="status" aria-live="polite"></div>
+      </div>
+    </div>
+
+    {# ── Session Reset ── #}
+    <div class="card mb-3 setting-card">
+      <div class="card-header">
+        <i class="bi bi-arrow-counterclockwise me-1 text-danger" aria-hidden="true"></i>
+        Reset Session
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">
+          Clears all uploaded data, conversation history, generated reports, and user profile.
+          Returns the application to demo mode.
+        </p>
+        <button class="btn btn-outline-danger" id="resetSessionBtn" type="button">
+          <i class="bi bi-trash me-1" aria-hidden="true"></i>Reset Session
+        </button>
+        <div id="resetMsg" class="mt-2" role="status" aria-live="polite"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+{% endblock %}

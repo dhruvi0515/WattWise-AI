@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+{% block title %}Report — {{ report.case_id }}{% endblock %}
+{% block page_title %}
+  <i class="bi bi-file-earmark-text-fill me-2" aria-hidden="true"></i>Investigation Report
+{% endblock %}
+
+{% block content %}
+<div class="row g-3 justify-content-center">
+  <div class="col-12 col-xl-11 report-document">
+
+    {# ══════════════════════ COMPANY HEADER ══════════════════════ #}
+    <div class="card mb-3 report-header-card" style="position:relative; overflow:hidden;">
+      <div class="report-watermark" aria-hidden="true">CONFIDENTIAL</div>
+      <div class="card-body py-4">
+        <div class="row align-items-center">
+          <div class="col-12 col-md-8">
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <div class="rounded-2 bg-ibm-blue p-2" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;">
+                <i class="bi bi-lightning-charge-fill text-white fs-5" aria-hidden="true"></i>
+              </div>
+              <div>
+                <div class="fw-bold" style="font-size:1.1rem;">WattWise AI</div>
+                <div class="text-muted small">Enterprise Energy Investigation Platform · IBM watsonx.ai</div>
+              </div>
+            </div>
+            <h4 class="mb-1 fw-bold">{{ report.user_question }}</h4>
+            <div class="d-flex flex-wrap gap-3 text-muted small mt-2">
+              <span>
+                <i class="bi bi-shield-check me-1 text-ibm-blue" aria-hidden="true"></i>
+                <strong>Case:</strong> {{ report.case_id }}
+              </span>
+              <span>
+                <i class="bi bi-calendar3 me-1" aria-hidden="true"></i>
+                <strong>Date:</strong> {{ report.timestamp }}
+              </span>
+              <span>
+                <i class="bi bi-database me-1" aria-hidden="true"></i>
+                <strong>Source:</strong> {{ report.data_source | upper }}
+              </span>
+              <span>
+                <i class="bi bi-robot me-1" aria-hidden="true"></i>
+                <strong>By:</strong> {{ report.generated_by | default("WattWise AI Agent Orchestrator") }}
+              </span>
+            </div>
+          </div>
+          <div class="col-12 col-md-4 text-md-end mt-3 mt-md-0">
+            {# Confidence badge #}
+            {% set conf_color = "success" if report.confidence_level == "High" else ("warning" if report.confidence_level == "Medium" else "secondary") %}
+            <div class="mb-2">
+              <span class="badge fs-6 bg-{{ conf_color }} px-3 py-2">
+                <i class="bi bi-graph-up me-1" aria-hidden="true"></i>
+                {{ report.confidence_level }} Confidence
+                ({{ (report.confidence_score * 100) | int }}%)
+              </span>
+            </div>
+            <div class="d-flex flex-wrap gap-2 justify-content-md-end">
+              <a href="{{ url_for('main.report_pdf', case_id=report.case_id) }}"
+                 target="_blank"
+                 class="btn btn-sm btn-outline-secondary no-print">
+                <i class="bi bi-file-pdf me-1" aria-hidden="true"></i>Export PDF
+              </a>
+              <a href="{{ url_for('main.reports') }}"
+                 class="btn btn-sm btn-outline-secondary no-print">
+                <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>All Reports
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ══════════════════════ SUMMARY KPIs ══════════════════════ #}
+    <div class="row g-3 mb-3">
+      {% set kpis = [
+        ("bi-lightning-charge-fill", "text-ibm-blue",  report.total_monthly_kwh,  "kWh/Month"),
+        ("bi-currency-dollar",       "text-success",   report.currency ~ report.total_monthly_cost, "Monthly Bill"),
+        ("bi-award-fill",            "text-info",      report.energy_score | default("N/A"), "Energy Score"),
+        ("bi-cloud-fill",            "text-secondary", report.monthly_co2_kg | default("N/A"), "kg CO₂/Month"),
+      ] %}
+      {% for icon, color, value, label in kpis %}
+      <div class="col-6 col-md-3">
+        <div class="card kpi-card text-center h-100">
+          <div class="card-body">
+            <div class="kpi-icon {{ color }}"><i class="bi {{ icon }}" aria-hidden="true"></i></div>
+            <div class="kpi-value">{{ value }}</div>
+            <div class="kpi-label">{{ label }}</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {# ══════════════════════ INVESTIGATION SUMMARY ══════════════════════ #}
+    <div class="card mb-3">
+      <div class="card-header">
+        <i class="bi bi-search me-1 text-ibm-blue" aria-hidden="true"></i>
+        Investigation Summary
+        <span class="badge bg-primary-subtle text-primary ms-auto">Section 1</span>
+      </div>
+      <div class="card-body">
+        <p class="mb-3">{{ report.investigation_summary }}</p>
+        <div class="alert alert-info d-flex align-items-start gap-2 mb-0 small" role="note">
+          <i class="bi bi-info-circle-fill flex-shrink-0 mt-1" aria-hidden="true"></i>
+          <div>
+            <strong>Confidence Assessment:</strong> {{ report.confidence_level }}
+            ({{ (report.confidence_score * 100) | int }}%) —
+            {{ report.confidence_reason }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ══════════════════════ EVIDENCE PANEL ══════════════════════ #}
+    <div class="card mb-3">
+      <div class="card-header">
+        <i class="bi bi-clipboard-data me-1 text-info" aria-hidden="true"></i>
+        Evidence Panel
+        <span class="badge bg-info-subtle text-info">{{ report.evidence_collected | length }} items</span>
+        <span class="badge bg-secondary-subtle text-secondary ms-auto">Section 2</span>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle" aria-label="Investigation evidence">
+            <thead class="table-light">
+              <tr>
+                <th scope="col">Evidence</th>
+                <th scope="col">Value</th>
+                <th scope="col" class="d-none d-md-table-cell">Detail</th>
+                <th scope="col">Confidence</th>
+                <th scope="col">Severity</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for e in report.evidence_collected %}
+              <tr>
+                <td>
+                  <i class="bi {{ e.icon | default('bi-circle') }} me-1 text-muted" aria-hidden="true"></i>
+                  <strong>{{ e.label }}</strong>
+                </td>
+                <td class="fw-semibold">{{ e.value }}</td>
+                <td class="text-muted small d-none d-md-table-cell">{{ e.detail | default("") }}</td>
+                <td>
+                  {% set conf_pct = (e.confidence * 100) | int %}
+                  <div class="d-flex align-items-center gap-1" aria-label="{{ conf_pct }}% confidence">
+                    <div class="progress" style="width:48px;height:5px;" role="progressbar"
+                         aria-valuenow="{{ conf_pct }}" aria-valuemin="0" aria-valuemax="100">
+                      <div class="progress-bar bg-primary" style="width:{{ conf_pct }}%"></div>
+                    </div>
+                    <span class="small text-muted">{{ conf_pct }}%</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge bg-{{ badge_class(e.flag) }}">{{ e.flag | title }}</span>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    {# ══════════════════════ CAUSES ══════════════════════ #}
+    <div class="row g-3 mb-3">
+      <div class="col-12 col-md-6">
+        <div class="card h-100 card-accent-red">
+          <div class="card-header bg-danger-subtle">
+            <i class="bi bi-exclamation-triangle-fill me-1 text-danger" aria-hidden="true"></i>
+            Primary Cause
+            <span class="badge bg-danger ms-auto">High Priority</span>
+          </div>
+          <div class="card-body">
+            <p class="mb-0 fw-semibold">{{ report.primary_cause }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-6">
+        <div class="card h-100 card-accent-yellow">
+          <div class="card-header bg-warning-subtle">
+            <i class="bi bi-exclamation-circle-fill me-1 text-warning" aria-hidden="true"></i>
+            Contributing Factors
+            <span class="badge bg-secondary-subtle text-secondary ms-auto">Section 3</span>
+          </div>
+          <div class="card-body">
+            {% if report.secondary_causes %}
+            <ul class="mb-0 ps-3">
+              {% for cause in report.secondary_causes %}
+              <li class="mb-1 small">{{ cause }}</li>
+              {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-muted mb-0 small">No secondary contributing factors identified.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ══════════════════════ AI NARRATIVE ══════════════════════ #}
+    <div class="card mb-3">
+      <div class="card-header">
+        <i class="bi bi-stars me-1 text-warning" aria-hidden="true"></i>
+        AI Investigation Narrative
+        <span class="badge bg-warning-subtle text-warning ms-auto">IBM watsonx.ai</span>
+        <span class="badge bg-secondary-subtle text-secondary">Section 4</span>
+      </div>
+      <div class="card-body">
+        <div class="ai-narrative" aria-label="AI generated investigation report">{{ report.ai_narrative | nl2br }}</div>
+      </div>
+    </div>
+
+    {# ══════════════════════ STRUCTURED RECOMMENDATIONS ══════════════════════ #}
+    {% if report.structured_recommendations %}
+    <div class="card mb-3">
+      <div class="card-header">
+        <i class="bi bi-lightbulb-fill me-1 text-success" aria-hidden="true"></i>
+        Prioritised Recommendations
+        <span class="badge bg-success-subtle text-success">Explainable AI</span>
+        <span class="badge bg-secondary-subtle text-secondary ms-auto">Section 5</span>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          {% for rec in report.structured_recommendations %}
+          <div class="col-12 col-lg-6">
+            <div class="card rec-card h-100 border-0 bg-body-secondary position-relative">
+              <div class="priority-ribbon
+                {% if rec.priority == 'High' %}ribbon-high
+                {% elif rec.priority == 'Medium' %}ribbon-medium
+                {% else %}ribbon-low{% endif %}"
+                aria-label="{{ rec.priority }} priority">
+                {{ rec.priority }}
+              </div>
+              <div class="card-body pt-4">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <span class="rec-icon" aria-hidden="true">
+                    <i class="bi {{ rec.icon | default('bi-lightbulb') }}"></i>
+                  </span>
+                  <strong class="small">{{ rec.title }}</strong>
+                </div>
+
+                <div class="xai-section mb-2">
+                  <div class="xai-label"><i class="bi bi-question-circle me-1" aria-hidden="true"></i>Why?</div>
+                  <div class="xai-text small text-muted">{{ rec.why }}</div>
+                </div>
+
+                <div class="xai-section mb-2">
+                  <div class="xai-label"><i class="bi bi-graph-up me-1" aria-hidden="true"></i>Expected Benefit</div>
+                  <div class="xai-text small text-muted">{{ rec.expected_benefit }}</div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-1 mt-2">
+                  <span class="badge bg-success-subtle text-success">
+                    <i class="bi bi-lightning me-1" aria-hidden="true"></i>
+                    -{{ rec.estimated_monthly_kwh_saving }} kWh/mo
+                  </span>
+                  <span class="badge bg-primary-subtle text-primary">
+                    {{ rec.currency }}{{ rec.estimated_monthly_cost_saving }}/mo
+                  </span>
+                  <span class="badge bg-secondary-subtle text-secondary small">
+                    {{ rec.difficulty }}
+                  </span>
+                  <span class="badge bg-info-subtle text-info small">
+                    <i class="bi bi-clock me-1" aria-hidden="true"></i>{{ rec.time_required }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ══════════════════════ ESTIMATED SAVINGS ══════════════════════ #}
+    <div class="card mb-3 card-accent-green">
+      <div class="card-header bg-success-subtle">
+        <i class="bi bi-check-circle-fill me-1 text-success" aria-hidden="true"></i>
+        Final Conclusion &amp; Estimated Savings
+        <span class="badge bg-secondary-subtle text-secondary ms-auto">Section 6</span>
+      </div>
+      <div class="card-body">
+        <p class="mb-3">{{ report.final_conclusion | default("Investigation complete. Implement the recommended actions to achieve the estimated savings.") }}</p>
+        <div class="row g-3 text-center">
+          <div class="col-12 col-md-4">
+            <div class="fw-bold fs-4 text-success">{{ report.estimated_monthly_savings.low }}</div>
+            <div class="text-muted small">Conservative Savings / Month</div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="fw-bold fs-4 text-success">{{ report.estimated_monthly_savings.high }}</div>
+            <div class="text-muted small">Optimistic Savings / Month</div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="fw-bold fs-4 text-ibm-blue">
+              {{ report.currency }}{{ report.potential_savings_cost | default(0) }}
+            </div>
+            <div class="text-muted small">AI-Calculated Potential / Month</div>
+          </div>
+        </div>
+        <p class="text-muted small text-center mt-3 mb-0">
+          <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+          {{ report.estimated_monthly_savings.note }}
+        </p>
+      </div>
+    </div>
+
+    {# ══════════════════════ FOOTER / NAVIGATION ══════════════════════ #}
+    <div class="card mb-3 no-print">
+      <div class="card-body py-2">
+        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+          <div class="d-flex gap-2 flex-wrap">
+            <a href="{{ url_for('main.reports') }}" class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>All Reports
+            </a>
+            <a href="{{ url_for('main.recommendations') }}" class="btn btn-success btn-sm">
+              <i class="bi bi-lightbulb me-1" aria-hidden="true"></i>Recommendations
+            </a>
+            <a href="{{ url_for('main.chat') }}" class="btn btn-primary btn-sm">
+              <i class="bi bi-chat-dots me-1" aria-hidden="true"></i>Continue in Chat
+            </a>
+          </div>
+          <a href="{{ url_for('main.report_pdf', case_id=report.case_id) }}"
+             target="_blank"
+             class="btn btn-outline-dark btn-sm">
+            <i class="bi bi-file-pdf me-1" aria-hidden="true"></i>Export PDF
+          </a>
+        </div>
+      </div>
+    </div>
+
+    {# Report footer (print-visible) #}
+    <div class="text-center text-muted small mt-3 pb-2" style="font-size:0.72rem;">
+      WattWise AI · {{ report.case_id }} · {{ report.timestamp }} ·
+      Powered by IBM watsonx.ai · Enterprise AI Energy Platform
+    </div>
+
+  </div>
+</div>
+{% endblock %}

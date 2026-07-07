@@ -1,0 +1,35 @@
+appliance,date,hour,kwh
+Air Conditioner,2024-01-15,8,1.5
+Air Conditioner,2024-01-15,9,1.5
+Air Conditioner,2024-01-15,14,1.5
+Air Conditioner,2024-01-15,15,1.5
+Air Conditioner,2024-01-15,20,1.5
+Air Conditioner,2024-01-15,21,1.5
+Water Heater,2024-01-15,6,2.0
+Water Heater,2024-01-15,19,2.0
+Refrigerator,2024-01-15,0,0.15
+Refrigerator,2024-01-15,6,0.15
+Refrigerator,2024-01-15,12,0.15
+Refrigerator,2024-01-15,18,0.15
+Washing Machine,2024-01-15,10,0.5
+Television,2024-01-15,18,0.12
+Television,2024-01-15,19,0.12
+Television,2024-01-15,20,0.12
+Laptop,2024-01-15,9,0.065
+Laptop,2024-01-15,14,0.065
+Lighting,2024-01-15,18,0.2
+Lighting,2024-01-15,19,0.2
+Lighting,2024-01-15,20,0.2
+Microwave,2024-01-15,7,0.5
+Dishwasher,2024-01-15,21,0.6
+Electric Oven,2024-01-15,18,1.2
+Air Conditioner,2024-02-15,8,1.5
+Air Conditioner,2024-02-15,14,1.5
+Air Conditioner,2024-02-15,20,1.5
+Water Heater,2024-02-15,6,2.0
+Refrigerator,2024-02-15,0,0.15
+Washing Machine,2024-02-15,10,0.5
+Television,2024-02-15,19,0.12
+Laptop,2024-02-15,9,0.065
+Lighting,2024-02-15,19,0.2
+Microwave,2024-02-15,7,0.5
