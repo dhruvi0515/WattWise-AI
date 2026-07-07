@@ -241,3 +241,6 @@ def _wants_json() -> bool:
 #         debug = FLASK_DEBUG,
 #     )
 app = Flask(__name__)
+@app.route('/')
+def home():
+    return "WattWise AI Backend is running successfully!"
