@@ -116,7 +116,7 @@ The AI never sees raw CSV data — only structured, pre-calculated summaries.
 
 | Layer | Technology |
 |-------|-----------|
-| **Backend** | Python 3.9+, Flask 3.0, Gunicorn |
+| **Backend** | Python 3.9+, Flask 3.0, Vercel |
 | **AI / LLM** | IBM watsonx.ai (IBM Granite), ibm-watsonx-ai SDK |
 | **Data Processing** | Pandas, NumPy |
 | **Frontend** | Bootstrap 5.3, Chart.js 4, IBM Plex Sans |
