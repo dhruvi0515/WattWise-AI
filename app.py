@@ -228,13 +228,15 @@ def _wants_json() -> bool:
     """Return True when the client prefers a JSON response."""
     return request.path.startswith("/api/") or "application/json" in request.accept_mimetypes
 
-# Create the Flask application for Gunicorn/Render
-application = create_app()
 
+# ─────────────────────────────────────────────────────────────────────────────
 # Development server entry point
+# ─────────────────────────────────────────────────────────────────────────────
+
 if __name__ == "__main__":
+    application = create_app()
     application.run(
-        host="0.0.0.0",
-        port=FLASK_PORT,
-        debug=FLASK_DEBUG,
+        host  = "0.0.0.0",
+        port  = FLASK_PORT,
+        debug = FLASK_DEBUG,
     )
