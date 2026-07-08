@@ -282,7 +282,7 @@ Edit `.env` with your credentials:
 IBM_API_KEY=your_ibm_api_key_here
 PROJECT_ID=your_watsonx_project_id_here
 IBM_URL=https://au-syd.ml.cloud.ibm.com   # change to match your project's region
-MODEL_ID=ibm/granite-3-1-8b-base          # check supported models for your region
+MODEL_ID=ibm/granite-8b-code-instruct          # check supported models for your region
 
 # Flask
 FLASK_SECRET_KEY=change-this-to-a-long-random-string
@@ -334,16 +334,9 @@ Open your browser at **http://localhost:5000**
 
 ---
 
-## Deployment to IBM Cloud
-
-See **[DEPLOYMENT.md](DEPLOYMENT.md)** for full IBM Cloud deployment instructions.
-
 ## Live Demo
 
-The application is deployed on Render.
-
-Live URL:
-https://your-render-link.onrender.com
+The application is deployed on viceral.
 
 ### Quick deploy to IBM Cloud Foundry
 
