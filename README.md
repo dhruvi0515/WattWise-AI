@@ -472,8 +472,6 @@ Download the [sample CSV](static/sample_energy_data.csv) to see the expected for
 
 ## Screenshots
 
-# 📸 Application Screenshots
-
 # 📸 Application Preview
 
 | Dashboard | AI Chat |
